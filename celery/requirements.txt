@@ -1,0 +1,7 @@
+loguru
+celery
+environs
+sqlalchemy
+psycopg2-binary
+redis
+flower==1.2.0

@@ -1,0 +1,91 @@
+version: "3.9"
+
+services:
+  celery-db:
+    image: postgres:13
+    container_name: celery-db
+    restart: always
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - PGPORT=${POSTGRES_PORT}
+    ports:
+      - ${POSTGRES_PORT}:${POSTGRES_PORT}
+    networks:
+      - celery-network
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -p ${POSTGRES_PORT}" ]
+    volumes:
+      - celery-db:/var/lib/postgresql/data
+
+  celery-redis:
+    image: redis:latest
+    container_name: celery-redis
+    restart: always
+    networks:
+      - celery-network
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+
+  celery-worker:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile-worker
+    container_name: celery-worker
+    restart: always
+    command: >
+      sh -c "celery -A celery_conf.celery_app worker -l info -n worker -Q case"
+    volumes:
+      - .:/app
+    networks:
+      - celery-network
+    env_file:
+      - .env
+    depends_on:
+      - celery-redis
+      - celery-db
+
+  celery-beat:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile-worker
+    container_name: celery-beat
+    restart: always
+    command: >
+      sh -c "celery -A celery_conf.celery_app beat -l info"
+    volumes:
+      - .:/app
+    networks:
+      - celery-network
+    env_file:
+      - .env
+    depends_on:
+      - celery-redis
+      - celery-db
+
+  celery-flower:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile-worker
+    container_name: celery-flower
+    restart: always
+    command: >
+      sh -c "celery flower --basic_auth=${FLOWER_USER}:${FLOWER_PASSWORD}"
+    environment:
+      - CELERY_BROKER_URL=${CELERY_BROKER_URL}
+      - FLOWER_PORT=${FLOWER_PORT}
+    networks:
+      - celery-network
+    ports:
+      - ${FLOWER_PORT}:${FLOWER_PORT}
+    depends_on:
+      - celery-worker
+      - celery-beat
+
+volumes:
+  celery-db:
+
+networks:
+  celery-network:
+    driver: bridge

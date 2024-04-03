@@ -1,0 +1,17 @@
+FROM python:3.12-alpine
+
+ARG SPACY_MODEL_CORE
+
+RUN apk update && \
+    apk add --no-cache curl && \
+    rm -rf /var/cache/apk/*
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONIOENCODING=utf-8
+
+WORKDIR /app
+
+COPY requirements.txt requirements.txt
+
+RUN pip install --no-cache-dir -r requirements.txt
