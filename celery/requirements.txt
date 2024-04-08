@@ -5,3 +5,5 @@ sqlalchemy
 psycopg2-binary
 redis
 flower==1.2.0
+boto3
+singleton_decorator

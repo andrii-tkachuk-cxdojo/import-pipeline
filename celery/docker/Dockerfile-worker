@@ -1,7 +1,5 @@
 FROM python:3.12-alpine
 
-ARG SPACY_MODEL_CORE
-
 RUN apk update && \
     apk add --no-cache curl && \
     rm -rf /var/cache/apk/*

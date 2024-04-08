@@ -1,24 +1,6 @@
 version: "3.9"
 
 services:
-  celery-db:
-    image: postgres:13
-    container_name: celery-db
-    restart: always
-    environment:
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_DB=${POSTGRES_DB}
-      - PGPORT=${POSTGRES_PORT}
-    ports:
-      - ${POSTGRES_PORT}:${POSTGRES_PORT}
-    networks:
-      - celery-network
-    healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -p ${POSTGRES_PORT}" ]
-    volumes:
-      - celery-db:/var/lib/postgresql/data
-
   celery-redis:
     image: redis:latest
     container_name: celery-redis
@@ -44,7 +26,6 @@ services:
       - .env
     depends_on:
       - celery-redis
-      - celery-db
 
   celery-beat:
     build:
@@ -62,7 +43,6 @@ services:
       - .env
     depends_on:
       - celery-redis
-      - celery-db
 
   celery-flower:
     build:
@@ -82,9 +62,6 @@ services:
     depends_on:
       - celery-worker
       - celery-beat
-
-volumes:
-  celery-db:
 
 networks:
   celery-network:
